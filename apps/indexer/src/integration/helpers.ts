@@ -105,12 +105,14 @@ export class MockKyselyDatabase {
   public tables: Record<string, any[]> = {
     checkpoints: [],
     block_metadata: [],
-    users: [],
-    deposits: [],
-    withdrawals: [],
-    trades: [],
-    order_fills: [],
-    swaps: [],
+    raw_deposits: [],
+    raw_withdrawals: [],
+    raw_trades: [],
+    raw_order_fills: [],
+    raw_swaps: [],
+    raw_swap_legs: [],
+    raw_failed_matches: [],
+    raw_failed_intents: [],
     token_metadata: [],
     metadata_queue: []
   };
@@ -150,21 +152,27 @@ export class MockKyselyDatabase {
       for (const w of query.wheres) {
         result = result.filter(row => {
           const val = row[w.col];
-          if (w.op === '=') return val === w.val;
-          if (w.op === '>=') return Number(val) >= Number(w.val);
-          if (w.op === '>') return Number(val) > Number(w.val);
-          if (w.op === '<=') return Number(val) <= Number(w.val);
-          if (w.op === '<') return Number(val) < Number(w.val);
-          return true;
+          const op = w.op;
+          const target = w.val;
+          let match = false;
+          if (op === "=" || op === "==") match = val === target;
+          else if (op === "in") match = Array.isArray(target) && target.includes(val);
+          else if (op === "<=") match = val <= target;
+          else if (op === ">=") match = val >= target;
+          else if (op === "<") match = val < target;
+          else if (op === ">") match = val > target;
+          else if (op === "!=") match = val !== target;
+          else match = val === target;
+          return match;
         });
       }
       if (query.orderBys.length > 0) {
         result.sort((a, b) => {
           for (const o of query.orderBys) {
-            const valA = a[o.col];
-            const valB = b[o.col];
-            if (valA < valB) return o.dir === 'desc' ? 1 : -1;
-            if (valA > valB) return o.dir === 'desc' ? -1 : 1;
+            const va = a[o.col];
+            const vb = b[o.col];
+            if (va < vb) return o.dir === 'desc' ? 1 : -1;
+            if (va > vb) return o.dir === 'desc' ? -1 : 1;
           }
           return 0;
         });
@@ -176,120 +184,108 @@ export class MockKyselyDatabase {
     }
 
     if (query.type === 'insert') {
-      const isArray = Array.isArray(query.values);
-      const rows = isArray ? query.values : [query.values];
+      const records = Array.isArray(query.values) ? query.values : [query.values];
       const insertedRows: any[] = [];
 
-      for (const rawRow of rows) {
-        const row = { ...rawRow };
-        // Apply schema defaults
-        if (table === 'block_metadata') {
-          if (row.is_canonical === undefined) row.is_canonical = true;
-        } else if (table === 'metadata_queue') {
-          if (row.status === undefined) row.status = 'Pending';
-          if (row.attempt_count === undefined) row.attempt_count = 0;
-        }
-
-        let conflictIndex = -1;
+      for (const rec of records) {
+        // Resolve PK conflicts
+        let isConflict = false;
         if (table === 'checkpoints') {
-          conflictIndex = list.findIndex(r => r.indexer_name === row.indexer_name);
+          isConflict = list.some(row => row.indexer_name === rec.indexer_name && row.chain_id === rec.chain_id);
         } else if (table === 'block_metadata') {
-          conflictIndex = list.findIndex(r => r.chain_id === row.chain_id && r.block_number === row.block_number && r.block_hash === row.block_hash);
-        } else if (table === 'users') {
-          conflictIndex = list.findIndex(r => r.wallet_address === row.wallet_address);
-        } else if (table === 'deposits') {
-          conflictIndex = list.findIndex(r => r.tx_hash === row.tx_hash && r.log_index === row.log_index);
-        } else if (table === 'withdrawals') {
-          conflictIndex = list.findIndex(r => r.tx_hash === row.tx_hash && r.log_index === row.log_index);
-        } else if (table === 'trades') {
-          conflictIndex = list.findIndex(r => r.trade_id === row.trade_id);
-        } else if (table === 'order_fills') {
-          conflictIndex = list.findIndex(r => r.fill_id === row.fill_id);
-        } else if (table === 'swaps') {
-          conflictIndex = list.findIndex(r => r.intent_hash === row.intent_hash && r.tx_hash === row.tx_hash);
+          if (rec.is_canonical === undefined) {
+            rec.is_canonical = true;
+          }
+          isConflict = list.some(row => row.chain_id === rec.chain_id && row.block_number === rec.block_number && row.block_hash === rec.block_hash);
+        } else if (table === 'raw_deposits') {
+          isConflict = list.some(row => row.tx_hash === rec.tx_hash && row.log_index === rec.log_index && row.chain_id === rec.chain_id);
+        } else if (table === 'raw_withdrawals') {
+          isConflict = list.some(row => row.tx_hash === rec.tx_hash && row.log_index === rec.log_index && row.chain_id === rec.chain_id);
+        } else if (table === 'raw_trades') {
+          isConflict = list.some(row => row.tx_hash === rec.tx_hash && row.log_index === rec.log_index && row.chain_id === rec.chain_id);
+        } else if (table === 'raw_order_fills') {
+          isConflict = list.some(row => row.fill_id === rec.fill_id);
+        } else if (table === 'raw_swaps') {
+          isConflict = list.some(row => row.intent_hash === rec.intent_hash && row.tx_hash === rec.tx_hash && row.chain_id === rec.chain_id);
         } else if (table === 'token_metadata') {
-          conflictIndex = list.findIndex(r => r.chain_id === row.chain_id && r.token_address === row.token_address);
+          isConflict = list.some(row => row.chain_id === rec.chain_id && row.token_address === rec.token_address);
         } else if (table === 'metadata_queue') {
-          conflictIndex = list.findIndex(r => r.chain_id === row.chain_id && r.token_address === row.token_address);
+          isConflict = list.some(row => row.chain_id === rec.chain_id && row.token_address === rec.token_address);
         }
 
-        if (conflictIndex !== -1) {
-          let isDoNothing = false;
-          let updateSetObj: any = null;
-
-          const ocMock = {
-            column: () => ocMock,
-            columns: () => ocMock,
-            doNothing: () => { isDoNothing = true; return ocMock; },
-            doUpdateSet: (setVal: any) => { updateSetObj = setVal; return ocMock; }
-          };
-
+        if (isConflict) {
+          // If update constraint
           if (query.onConflictCb) {
-            query.onConflictCb(ocMock);
-          }
-
-          if (!isDoNothing && updateSetObj) {
-            list[conflictIndex] = { ...list[conflictIndex], ...updateSetObj };
-            insertedRows.push(list[conflictIndex]);
+            const builder = {
+              column: () => builder,
+              columns: () => builder,
+              doUpdateSet: (updates: any) => {
+                let match: any = null;
+                if (table === 'checkpoints') {
+                  match = list.find(row => row.indexer_name === rec.indexer_name && row.chain_id === rec.chain_id);
+                } else if (table === 'block_metadata') {
+                  match = list.find(row => row.chain_id === rec.chain_id && row.block_number === rec.block_number && row.block_hash === rec.block_hash);
+                } else if (table === 'token_metadata') {
+                  match = list.find(row => row.chain_id === rec.chain_id && row.token_address === rec.token_address);
+                } else if (table === 'metadata_queue') {
+                  match = list.find(row => row.chain_id === rec.chain_id && row.token_address === rec.token_address);
+                }
+                if (match) {
+                  Object.assign(match, updates);
+                  insertedRows.push(match);
+                }
+              },
+              doNothing: () => {}
+            };
+            query.onConflictCb(builder);
           }
         } else {
-          list.push(row);
-          insertedRows.push(row);
+          list.push(rec);
+          insertedRows.push(rec);
         }
       }
       return insertedRows;
     }
 
-    if (query.type === 'delete') {
-      let removedCount = 0;
-      for (let i = list.length - 1; i >= 0; i--) {
-        let matches = true;
-        for (const w of query.wheres) {
-          const val = list[i][w.col];
-          if (w.op === '=') matches = matches && (val === w.val);
-          if (w.op === '>=') matches = matches && (Number(val) >= Number(w.val));
-          if (w.op === '>') matches = matches && (Number(val) > Number(w.val));
-          if (w.op === '<=') matches = matches && (Number(val) <= Number(w.val));
-          if (w.op === '<') matches = matches && (Number(val) < Number(w.val));
-        }
-        if (matches) {
-          list.splice(i, 1);
-          removedCount++;
-        }
-      }
-      return { numDeletedRows: BigInt(removedCount) };
-    }
-
     if (query.type === 'update') {
-      let result = [];
-      for (let i = 0; i < list.length; i++) {
+      let updatedCount = 0;
+      for (const row of list) {
         let matches = true;
         for (const w of query.wheres) {
-          const val = list[i][w.col];
-          if (w.op === '=') matches = matches && (val === w.val);
-          if (w.op === '>=') matches = matches && (Number(val) >= Number(w.val));
-          if (w.op === '>') matches = matches && (Number(val) > Number(w.val));
-          if (w.op === '<=') matches = matches && (Number(val) <= Number(w.val));
-          if (w.op === '<') matches = matches && (Number(val) < Number(w.val));
+          if (row[w.col] !== w.val) matches = false;
         }
         if (matches) {
-          const updateObj = { ...query.set };
-          for (const key of Object.keys(updateObj)) {
-            const val = updateObj[key];
-            if (val && typeof val === 'object') {
-              if (key === 'attempt_count') {
-                updateObj[key] = (list[i].attempt_count || 0) + 1;
-              } else if (key === 'status') {
-                const nextAttempt = (list[i].attempt_count || 0) + 1;
-                updateObj[key] = nextAttempt >= 5 ? 'Dead' : 'Failed';
+          for (const [k, val] of Object.entries(query.set)) {
+            if (val && typeof val === "object" && typeof (val as any).toOperationNode === "function") {
+              if (k === "attempt_count") {
+                row[k] = (row[k] || 0) + 1;
+              } else if (k === "status") {
+                row[k] = (row["attempt_count"] || 0) >= 5 ? "Dead" : "Failed";
               }
+            } else {
+              row[k] = val;
             }
           }
-          list[i] = { ...list[i], ...updateObj };
-          result.push(list[i]);
+          updatedCount++;
         }
       }
-      return result;
+      return [{ numUpdatedRows: BigInt(updatedCount) }];
+    }
+
+    if (query.type === 'delete') {
+      let deletedCount = 0;
+      this.tables[table] = list.filter(row => {
+        let matches = true;
+        for (const w of query.wheres) {
+          if (row[w.col] !== w.val) matches = false;
+        }
+        if (matches) {
+          deletedCount++;
+          return false;
+        }
+        return true;
+      });
+      return [{ numDeletedRows: BigInt(deletedCount) }];
     }
 
     return [];
@@ -358,11 +354,11 @@ export async function serializeDatabaseState(db: MockKyselyDatabase): Promise<Re
   const tables = [
     "checkpoints",
     "block_metadata",
-    "users",
-    "deposits",
-    "withdrawals",
-    "trades",
-    "swaps",
+    "raw_deposits",
+    "raw_withdrawals",
+    "raw_trades",
+    "raw_order_fills",
+    "raw_swaps",
     "token_metadata",
     "metadata_queue",
   ] as const;
@@ -370,23 +366,23 @@ export async function serializeDatabaseState(db: MockKyselyDatabase): Promise<Re
   const state: Record<string, any> = {};
 
   for (const table of tables) {
-    let list = [...db.tables[table]];
+    let list = [...(db.tables[table] || [])];
 
     // Deterministic sorting
     if (table === "checkpoints") {
       list.sort((a, b) => a.indexer_name.localeCompare(b.indexer_name) || a.chain_id - b.chain_id);
     } else if (table === "block_metadata") {
       list.sort((a, b) => a.chain_id - b.chain_id || a.block_number - b.block_number || a.block_hash.localeCompare(b.block_hash));
-    } else if (table === "users") {
-      list.sort((a, b) => a.wallet_address.localeCompare(b.wallet_address));
-    } else if (table === "deposits") {
-      list.sort((a, b) => a.tx_hash.localeCompare(b.tx_hash) || a.log_index - b.log_index);
-    } else if (table === "withdrawals") {
-      list.sort((a, b) => a.tx_hash.localeCompare(b.tx_hash) || a.log_index - b.log_index);
-    } else if (table === "trades") {
-      list.sort((a, b) => a.tx_hash.localeCompare(b.tx_hash) || a.trade_id.localeCompare(b.trade_id));
-    } else if (table === "swaps") {
-      list.sort((a, b) => a.intent_hash.localeCompare(b.intent_hash) || a.tx_hash.localeCompare(b.tx_hash));
+    } else if (table === "raw_deposits") {
+      list.sort((a, b) => a.tx_hash.localeCompare(b.tx_hash) || a.log_index - b.log_index || a.chain_id - b.chain_id);
+    } else if (table === "raw_withdrawals") {
+      list.sort((a, b) => a.tx_hash.localeCompare(b.tx_hash) || a.log_index - b.log_index || a.chain_id - b.chain_id);
+    } else if (table === "raw_trades") {
+      list.sort((a, b) => a.tx_hash.localeCompare(b.tx_hash) || a.log_index - b.log_index || a.chain_id - b.chain_id);
+    } else if (table === "raw_order_fills") {
+      list.sort((a, b) => a.fill_id.localeCompare(b.fill_id));
+    } else if (table === "raw_swaps") {
+      list.sort((a, b) => a.intent_hash.localeCompare(b.intent_hash) || a.tx_hash.localeCompare(b.tx_hash) || a.chain_id - b.chain_id);
     } else if (table === "token_metadata") {
       list.sort((a, b) => a.chain_id - b.chain_id || a.token_address.localeCompare(b.token_address));
     } else if (table === "metadata_queue") {
@@ -395,8 +391,15 @@ export async function serializeDatabaseState(db: MockKyselyDatabase): Promise<Re
 
     state[table] = JSON.parse(
       JSON.stringify(list, (key, value) => {
-        if (key === "created_at" || key === "updated_at" || key === "first_active_at" || key === "last_active_at" || key === "block_timestamp" || key === "run_at") {
+        if (key === "created_at" || key === "updated_at" || key === "block_timestamp" || key === "run_at") {
           return "PINNED_TIMESTAMP";
+        }
+        if (value && typeof value === 'object' && value.type === 'Buffer') {
+          // Convert Buffer serialization to hex string for predictable diffs
+          return "0x" + Buffer.from(value.data).toString("hex");
+        }
+        if (Buffer.isBuffer(value)) {
+          return "0x" + value.toString("hex");
         }
         return value;
       })

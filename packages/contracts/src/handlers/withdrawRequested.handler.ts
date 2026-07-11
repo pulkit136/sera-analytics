@@ -24,12 +24,7 @@ export const WithdrawRequestedHandler: EventHandler<WithdrawRequestedEvent> = {
         token_address: tokenAddress,
         amount: event.args.amount.toString(),
         withdrawal_type: "emergency",
-        status: "pending_timelock",
         request_block: Number(event.args.requestBlock),
-      },
-      {
-        recordType: "user",
-        wallet_address: userAddress,
       },
     ];
   },

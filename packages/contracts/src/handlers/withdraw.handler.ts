@@ -24,12 +24,7 @@ export const WithdrawHandler: EventHandler<WithdrawEvent> = {
         token_address: tokenAddress,
         amount: event.args.amount.toString(),
         withdrawal_type: "emergency",
-        status: "executed",
         request_block: null,
-      },
-      {
-        recordType: "user",
-        wallet_address: userAddress,
       },
     ];
   },

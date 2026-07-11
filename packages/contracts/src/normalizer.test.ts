@@ -14,9 +14,11 @@ describe("DefaultEventNormalizer Unit Tests", () => {
     topics: ["0x1"],
     data: "0x2",
     blockHash: "0x3",
+    transactionIndex: 0,
+    chainId: 1,
   };
 
-  it("should normalize Deposited event to DepositRecord and UserRecord", () => {
+  it("should normalize Deposited event to DepositRecord", () => {
     const event: SeraEvent = {
       type: "Deposited",
       args: {
@@ -29,10 +31,9 @@ describe("DefaultEventNormalizer Unit Tests", () => {
 
     const records = normalizer.normalize(event);
 
-    expect(records).toHaveLength(2);
+    expect(records).toHaveLength(1);
 
     const deposit = records.find((r) => r.recordType === "deposit");
-    const user = records.find((r) => r.recordType === "user");
 
     expect(deposit).toEqual({
       recordType: "deposit",
@@ -42,15 +43,15 @@ describe("DefaultEventNormalizer Unit Tests", () => {
       user_address: "0xuseraddress",
       token_address: "0xtokenaddress",
       amount: "5000",
-    });
-
-    expect(user).toEqual({
-      recordType: "user",
-      wallet_address: "0xuseraddress",
+      chain_id: baseEventProps.chainId,
+      block_hash: baseEventProps.blockHash,
+      transaction_index: baseEventProps.transactionIndex,
+      raw_topics: baseEventProps.topics,
+      raw_data: baseEventProps.data,
     });
   });
 
-  it("should normalize Withdrawn event to standard WithdrawalRecord and UserRecord", () => {
+  it("should normalize Withdrawn event to standard WithdrawalRecord", () => {
     const event: SeraEvent = {
       type: "Withdrawn",
       args: {
@@ -63,7 +64,7 @@ describe("DefaultEventNormalizer Unit Tests", () => {
 
     const records = normalizer.normalize(event);
 
-    expect(records).toHaveLength(2);
+    expect(records).toHaveLength(1);
 
     const withdrawal = records.find((r) => r.recordType === "withdrawal");
     expect(withdrawal).toEqual({
@@ -75,12 +76,16 @@ describe("DefaultEventNormalizer Unit Tests", () => {
       token_address: "0xtokenaddress",
       amount: "2500",
       withdrawal_type: "standard",
-      status: "executed",
       request_block: null,
+      chain_id: baseEventProps.chainId,
+      block_hash: baseEventProps.blockHash,
+      transaction_index: baseEventProps.transactionIndex,
+      raw_topics: baseEventProps.topics,
+      raw_data: baseEventProps.data,
     });
   });
 
-  it("should normalize InstantWithdraw event to instant WithdrawalRecord and UserRecord", () => {
+  it("should normalize InstantWithdraw event to instant WithdrawalRecord", () => {
     const event: SeraEvent = {
       type: "InstantWithdraw",
       args: {
@@ -95,7 +100,7 @@ describe("DefaultEventNormalizer Unit Tests", () => {
 
     const records = normalizer.normalize(event);
 
-    expect(records).toHaveLength(2);
+    expect(records).toHaveLength(1);
 
     const withdrawal = records.find((r) => r.recordType === "withdrawal");
     expect(withdrawal).toEqual({
@@ -107,12 +112,16 @@ describe("DefaultEventNormalizer Unit Tests", () => {
       token_address: "0xtokenaddress",
       amount: "3000",
       withdrawal_type: "instant",
-      status: "executed",
       request_block: null,
+      chain_id: baseEventProps.chainId,
+      block_hash: baseEventProps.blockHash,
+      transaction_index: baseEventProps.transactionIndex,
+      raw_topics: baseEventProps.topics,
+      raw_data: baseEventProps.data,
     });
   });
 
-  it("should normalize WithdrawRequested event to emergency timelock WithdrawalRecord and UserRecord", () => {
+  it("should normalize WithdrawRequested event to emergency timelock WithdrawalRecord", () => {
     const event: SeraEvent = {
       type: "WithdrawRequested",
       args: {
@@ -126,7 +135,7 @@ describe("DefaultEventNormalizer Unit Tests", () => {
 
     const records = normalizer.normalize(event);
 
-    expect(records).toHaveLength(2);
+    expect(records).toHaveLength(1);
 
     const withdrawal = records.find((r) => r.recordType === "withdrawal");
     expect(withdrawal).toEqual({
@@ -138,12 +147,16 @@ describe("DefaultEventNormalizer Unit Tests", () => {
       token_address: "0xtokenaddress",
       amount: "8000",
       withdrawal_type: "emergency",
-      status: "pending_timelock",
       request_block: 950,
+      chain_id: baseEventProps.chainId,
+      block_hash: baseEventProps.blockHash,
+      transaction_index: baseEventProps.transactionIndex,
+      raw_topics: baseEventProps.topics,
+      raw_data: baseEventProps.data,
     });
   });
 
-  it("should normalize Withdraw event to executed emergency WithdrawalRecord and UserRecord", () => {
+  it("should normalize Withdraw event to executed emergency WithdrawalRecord", () => {
     const event: SeraEvent = {
       type: "Withdraw",
       args: {
@@ -156,7 +169,7 @@ describe("DefaultEventNormalizer Unit Tests", () => {
 
     const records = normalizer.normalize(event);
 
-    expect(records).toHaveLength(2);
+    expect(records).toHaveLength(1);
 
     const withdrawal = records.find((r) => r.recordType === "withdrawal");
     expect(withdrawal).toEqual({
@@ -168,12 +181,16 @@ describe("DefaultEventNormalizer Unit Tests", () => {
       token_address: "0xtokenaddress",
       amount: "8000",
       withdrawal_type: "emergency",
-      status: "executed",
       request_block: null,
+      chain_id: baseEventProps.chainId,
+      block_hash: baseEventProps.blockHash,
+      transaction_index: baseEventProps.transactionIndex,
+      raw_topics: baseEventProps.topics,
+      raw_data: baseEventProps.data,
     });
   });
 
-  it("should normalize OrderMatched to a TradeRecord, two OrderFillRecords, and two UserRecords", () => {
+  it("should normalize OrderMatched to a TradeRecord and two OrderFillRecords", () => {
     const event: SeraEvent = {
       type: "OrderMatched",
       args: {
@@ -193,11 +210,10 @@ describe("DefaultEventNormalizer Unit Tests", () => {
 
     const records = normalizer.normalize(event);
 
-    expect(records).toHaveLength(5);
+    expect(records).toHaveLength(3);
 
     const trade = records.find((r) => r.recordType === "trade");
     const fills = records.filter((r) => r.recordType === "order_fill");
-    const users = records.filter((r) => r.recordType === "user");
 
     const expectedTradeId = `${baseEventProps.transactionHash.toLowerCase()}_${baseEventProps.logIndex}`;
 
@@ -206,15 +222,23 @@ describe("DefaultEventNormalizer Unit Tests", () => {
       trade_id: expectedTradeId,
       tx_hash: baseEventProps.transactionHash.toLowerCase(),
       block_number: Number(baseEventProps.blockNumber),
+      log_index: baseEventProps.logIndex,
       order_hash_0: "0xhash0",
       order_hash_1: "0xhash1",
       user_0: "0xuser0",
       user_1: "0xuser1",
       token_0: "0xtoken0",
       token_1: "0xtoken1",
-      match_amount_0: "1000",
-      match_amount_1: "2000",
+      amount_0: "1000",
+      amount_1: "2000",
+      protocol_take_0: "1",
+      protocol_take_1: "2",
       price_0_to_1: "2", // 2000 / 1000 = 2
+      chain_id: baseEventProps.chainId,
+      block_hash: baseEventProps.blockHash,
+      transaction_index: baseEventProps.transactionIndex,
+      raw_topics: baseEventProps.topics,
+      raw_data: baseEventProps.data,
     });
 
     expect(fills).toHaveLength(2);
@@ -223,19 +247,19 @@ describe("DefaultEventNormalizer Unit Tests", () => {
       fill_id: `${expectedTradeId}_0xhash0`,
       tx_hash: baseEventProps.transactionHash.toLowerCase(),
       block_number: Number(baseEventProps.blockNumber),
+      log_index: baseEventProps.logIndex,
       order_hash: "0xhash0",
       trade_id: expectedTradeId,
       amount_filled: "1000",
-    });
-
-    expect(users).toHaveLength(2);
-    expect(users[0]).toEqual({
-      recordType: "user",
-      wallet_address: "0xuser0",
+      chain_id: baseEventProps.chainId,
+      block_hash: baseEventProps.blockHash,
+      transaction_index: baseEventProps.transactionIndex,
+      raw_topics: baseEventProps.topics,
+      raw_data: baseEventProps.data,
     });
   });
 
-  it("should normalize IntentMatched to SwapRecord and UserRecord", () => {
+  it("should normalize IntentMatched to SwapRecord", () => {
     const event: SeraEvent = {
       type: "IntentMatched",
       args: {
@@ -248,7 +272,7 @@ describe("DefaultEventNormalizer Unit Tests", () => {
 
     const records = normalizer.normalize(event);
 
-    expect(records).toHaveLength(2);
+    expect(records).toHaveLength(1);
 
     const swap = records.find((r) => r.recordType === "swap");
     expect(swap).toEqual({
@@ -256,14 +280,14 @@ describe("DefaultEventNormalizer Unit Tests", () => {
       intent_hash: "0xintent",
       tx_hash: baseEventProps.transactionHash.toLowerCase(),
       block_number: Number(baseEventProps.blockNumber),
+      log_index: baseEventProps.logIndex,
       taker_address: "0xtaker",
-      input_token: "",
-      output_token: "",
-      input_amount: "0",
-      output_amount: "0",
-      routing_path: "[]",
-      fee_amount: "0",
-      fee_token: "",
+      leg_count: 3,
+      chain_id: baseEventProps.chainId,
+      block_hash: baseEventProps.blockHash,
+      transaction_index: baseEventProps.transactionIndex,
+      raw_topics: baseEventProps.topics,
+      raw_data: baseEventProps.data,
     });
   });
 

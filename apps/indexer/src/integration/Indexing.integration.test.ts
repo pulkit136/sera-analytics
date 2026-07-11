@@ -55,7 +55,7 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
 
     // Verify deposits
     const deposits = await db
-      .selectFrom("deposits")
+      .selectFrom("raw_deposits")
       .selectAll()
       .orderBy("tx_hash")
       .orderBy("log_index")
@@ -122,7 +122,7 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
     // Checkpoint should either be null or 99 (startBlock-1 if it was updated at startBlock, but since it failed
     // inside the tx, let's verify what checkpoint and deposits exist).
     const checkpointMid = await db.selectFrom("checkpoints").selectAll().executeTakeFirst();
-    const depositsMid = await db.selectFrom("deposits").selectAll().execute();
+    const depositsMid = await db.selectFrom("raw_deposits").selectAll().execute();
 
     // Since block 100 succeeds and processes block 100 (which commits successfully because the logs for range are fetched.
     // Wait, the batch size is 10. So it fetches blocks 100-109 in one batch!
@@ -151,7 +151,7 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
       .executeTakeFirst();
     expect(Number(checkpointFinal?.latest_indexed_block)).toBe(crashFixture.expectedCheckpoint);
 
-    const depositsFinal = await db.selectFrom("deposits").selectAll().execute();
+    const depositsFinal = await db.selectFrom("raw_deposits").selectAll().execute();
     expect(depositsFinal).toHaveLength(3); // block 100 deposit + block 101 deposit + block 102 deposit
   });
 
@@ -239,20 +239,20 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
     const discoveryEngine = new DefaultDiscoveryEngine(registry);
 
     // Discover tokens from deposits in DB
-    const rawDeposits = await db.selectFrom("deposits").selectAll().execute();
+    const rawDeposits = await db.selectFrom("raw_deposits").selectAll().execute();
     const deposits = rawDeposits.map(d => ({ ...d, recordType: "deposit" as const }));
     const discoveryBatch = discoveryEngine.discoverTokens(deposits, CHAIN_ID, 100, 102);
 
     expect(discoveryBatch.tokens).toHaveLength(2); // USDC and WBTC
 
     // Step 3: Set up Metadata Pipeline with a mock provider that fails once then succeeds
-    let callCount = 0;
+    let usdcCallCount = 0;
     const mockProvider = {
       fetchMetadata: async (token: any) => {
-        callCount++;
         if (token.address.toLowerCase() === ADDRESSES.TOKEN_USDC.toLowerCase()) {
-          if (callCount === 1) {
-            return { status: "failure", error: "Rate limit", isTransient: true };
+          usdcCallCount++;
+          if (usdcCallCount === 1) {
+            throw new Error("Transient RPC error");
           }
           return { status: "success", name: "USD Coin", symbol: "USDC", decimals: 6 };
         }
@@ -322,7 +322,7 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
     registry.register(new DepositDiscoveryRule());
     const discoveryEngine = new DefaultDiscoveryEngine(registry);
 
-    const rawDeposits = await db.selectFrom("deposits").selectAll().execute();
+    const rawDeposits = await db.selectFrom("raw_deposits").selectAll().execute();
     const deposits = rawDeposits.map(d => ({ ...d, recordType: "deposit" as const }));
     const discoveryBatch = discoveryEngine.discoverTokens(deposits, CHAIN_ID, 100, 102);
 
@@ -377,7 +377,7 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
       .executeTakeFirst();
     expect(Number(checkpoint?.latest_indexed_block)).toBe(emptyBlocksFixture.expectedCheckpoint);
 
-    const deposits = await db.selectFrom("deposits").selectAll().execute();
+    const deposits = await db.selectFrom("raw_deposits").selectAll().execute();
     expect(deposits).toHaveLength(0);
   });
 
@@ -414,15 +414,15 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
       chainId: CHAIN_ID,
     });
 
-    const deposits = await db.selectFrom("deposits").selectAll().execute();
+    const deposits = await db.selectFrom("raw_deposits").selectAll().execute();
     expect(deposits).toHaveLength(1);
     expect(deposits[0].amount).toBe("5000");
 
-    const trades = await db.selectFrom("trades").selectAll().execute();
+    const trades = await db.selectFrom("raw_trades").selectAll().execute();
     expect(trades).toHaveLength(1);
     expect(trades[0].order_hash_0).toBe(mixedFixture.expectedOrderHash0);
 
-    const swaps = await db.selectFrom("swaps").selectAll().execute();
+    const swaps = await db.selectFrom("raw_swaps").selectAll().execute();
     expect(swaps).toHaveLength(1);
     expect(swaps[0].intent_hash).toBe(mixedFixture.expectedIntentHash);
   });

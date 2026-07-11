@@ -24,10 +24,6 @@ export const DepositedHandler: EventHandler<DepositedEvent> = {
         token_address: tokenAddress,
         amount: event.args.amount.toString(),
       },
-      {
-        recordType: "user",
-        wallet_address: userAddress,
-      },
     ];
   },
 };

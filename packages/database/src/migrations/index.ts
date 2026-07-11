@@ -4,7 +4,7 @@ import * as createCheckpointsTable from "./20260711000001_create_checkpoints_tab
 import * as createBlockMetadata from "./20260711000002_create_block_metadata.js";
 import * as createTokenMetadata from "./20260711000003_create_token_metadata.js";
 import * as createMetadataQueue from "./20260711000004_create_metadata_queue.js";
-import * as createRepositoryTables from "./20260711000005_create_repository_tables.js";
+import * as createRawOrderFills from "./20260711000006_create_raw_order_fills.js";
 
 /**
  * Registry of all database schema migrations.
@@ -15,5 +15,5 @@ export const migrations: Record<string, Migration> = {
   "20260711000002_create_block_metadata": createBlockMetadata,
   "20260711000003_create_token_metadata": createTokenMetadata,
   "20260711000004_create_metadata_queue": createMetadataQueue,
-  "20260711000005_create_repository_tables": createRepositoryTables,
+  "20260711000006_create_raw_order_fills": createRawOrderFills,
 };

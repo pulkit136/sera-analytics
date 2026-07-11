@@ -5,11 +5,16 @@ import { EventHandlerRegistry } from "./handlers/registry.js";
 export interface BaseRecord {
   tx_hash: string;
   block_number: number;
+  log_index: number;
+  chain_id?: number;
+  block_hash?: string;
+  transaction_index?: number;
+  raw_topics?: string[];
+  raw_data?: string;
 }
 
 export interface DepositRecord extends BaseRecord {
   recordType: "deposit";
-  log_index: number;
   user_address: string;
   token_address: string;
   amount: string;
@@ -17,32 +22,32 @@ export interface DepositRecord extends BaseRecord {
 
 export interface WithdrawalRecord extends BaseRecord {
   recordType: "withdrawal";
-  log_index: number;
   user_address: string;
   token_address: string;
   amount: string;
-  withdrawal_type: "standard" | "instant" | "emergency";
-  status: "pending_timelock" | "executed" | "cancelled";
+  withdrawal_type: string;
   request_block: number | null;
 }
 
 export interface TradeRecord extends BaseRecord {
   recordType: "trade";
-  trade_id: string; // deterministically generated from txHash + logIndex
+  trade_id: string;
   order_hash_0: string;
   order_hash_1: string;
   user_0: string;
   user_1: string;
   token_0: string;
   token_1: string;
-  match_amount_0: string;
-  match_amount_1: string;
+  amount_0: string;
+  amount_1: string;
+  protocol_take_0: string;
+  protocol_take_1: string;
   price_0_to_1: string;
 }
 
 export interface OrderFillRecord extends BaseRecord {
   recordType: "order_fill";
-  fill_id: string; // deterministically generated from txHash + logIndex + orderHash
+  fill_id: string;
   order_hash: string;
   trade_id: string;
   amount_filled: string;
@@ -52,18 +57,7 @@ export interface SwapRecord extends BaseRecord {
   recordType: "swap";
   intent_hash: string;
   taker_address: string;
-  input_token: string;
-  output_token: string;
-  input_amount: string;
-  output_amount: string;
-  routing_path: string;
-  fee_amount: string;
-  fee_token: string;
-}
-
-export interface UserRecord {
-  recordType: "user";
-  wallet_address: string;
+  leg_count: number;
 }
 
 export type NormalizedRecord =
@@ -71,8 +65,7 @@ export type NormalizedRecord =
   | WithdrawalRecord
   | TradeRecord
   | OrderFillRecord
-  | SwapRecord
-  | UserRecord;
+  | SwapRecord;
 
 /**
  * EventNormalizer maps raw parsed protocol events into relational records.
@@ -99,7 +92,15 @@ export class DefaultEventNormalizer implements EventNormalizer {
       if (!event) {
         throw new NormalizerError("SeraEvent input parameter cannot be null or undefined");
       }
-      return EventHandlerRegistry.handle(event);
+      const records = EventHandlerRegistry.handle(event);
+      return records.map((r) => ({
+        ...r,
+        chain_id: event.chainId,
+        block_hash: event.blockHash,
+        transaction_index: event.transactionIndex,
+        raw_topics: event.topics,
+        raw_data: event.data,
+      })) as NormalizedRecord[];
     } catch (err) {
       if (err instanceof NormalizerError) throw err;
       throw new NormalizerError(

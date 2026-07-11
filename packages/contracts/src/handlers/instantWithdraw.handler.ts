@@ -24,12 +24,7 @@ export const InstantWithdrawHandler: EventHandler<InstantWithdrawEvent> = {
         token_address: tokenAddress,
         amount: event.args.amount.toString(),
         withdrawal_type: "instant",
-        status: "executed",
         request_block: null,
-      },
-      {
-        recordType: "user",
-        wallet_address: userAddress,
       },
     ];
   },

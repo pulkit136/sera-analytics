@@ -68,9 +68,8 @@ describe("EventHandlerRegistry Unit Tests", () => {
     };
 
     const records = EventHandlerRegistry.handle(event);
-    expect(records).toHaveLength(2);
+    expect(records).toHaveLength(1);
     expect(records[0].recordType).toBe("deposit");
-    expect(records[1].recordType).toBe("user");
   });
 
   it("should support dynamic registration of new or overriding handlers", () => {

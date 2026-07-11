@@ -59,52 +59,32 @@ export class KyselyRecordRepository implements RecordRepository {
       };
 
       // Group records to insert in order of reference dependency
-      const users = records.filter((r) => r.recordType === "user");
       const deposits = records.filter((r) => r.recordType === "deposit");
       const withdrawals = records.filter((r) => r.recordType === "withdrawal");
       const trades = records.filter((r) => r.recordType === "trade");
       const fills = records.filter((r) => r.recordType === "order_fill");
       const swaps = records.filter((r) => r.recordType === "swap");
 
-      // 1. Persist Users
-      for (const u of users) {
-        if (u.recordType !== "user") continue;
-        const res = await db
-          .insertInto("users")
-          .values({
-            wallet_address: u.wallet_address,
-            first_active_at: new Date(),
-            last_active_at: new Date(),
-          })
-          .onConflict((oc) =>
-            oc.column("wallet_address").doUpdateSet({
-              last_active_at: new Date(),
-            }),
-          )
-          .returningAll()
-          .executeTakeFirst();
-
-        if (res) {
-          result.inserted.push(u);
-          result.statistics.insertedCount++;
-        }
-      }
-
-      // 2. Persist Deposits
+      // 1. Persist Deposits
       for (const d of deposits) {
         if (d.recordType !== "deposit") continue;
         const res = await db
-          .insertInto("deposits")
+          .insertInto("raw_deposits")
           .values({
             tx_hash: d.tx_hash,
             log_index: d.log_index,
+            chain_id: d.chain_id!,
             block_number: d.block_number,
+            block_hash: d.block_hash!,
+            block_timestamp: new Date(),
+            transaction_index: d.transaction_index!,
             user_address: d.user_address,
             token_address: d.token_address,
             amount: d.amount,
-            block_timestamp: new Date(),
+            raw_topics: d.raw_topics!,
+            raw_data: Buffer.from(d.raw_data!.slice(2), "hex"),
           })
-          .onConflict((oc) => oc.columns(["tx_hash", "log_index"]).doNothing())
+          .onConflict((oc) => oc.columns(["tx_hash", "log_index", "chain_id"]).doNothing())
           .returningAll()
           .executeTakeFirst();
 
@@ -117,29 +97,28 @@ export class KyselyRecordRepository implements RecordRepository {
         }
       }
 
-      // 3. Persist Withdrawals
+      // 2. Persist Withdrawals
       for (const w of withdrawals) {
         if (w.recordType !== "withdrawal") continue;
         const res = await db
-          .insertInto("withdrawals")
+          .insertInto("raw_withdrawals")
           .values({
             tx_hash: w.tx_hash,
             log_index: w.log_index,
+            chain_id: w.chain_id!,
             block_number: w.block_number,
+            block_hash: w.block_hash!,
+            block_timestamp: new Date(),
+            transaction_index: w.transaction_index!,
             user_address: w.user_address,
             token_address: w.token_address,
             amount: w.amount,
-            type: w.withdrawal_type,
-            status: w.status,
+            withdrawal_type: w.withdrawal_type,
             request_block: w.request_block,
-            block_timestamp: new Date(),
+            raw_topics: w.raw_topics!,
+            raw_data: Buffer.from(w.raw_data!.slice(2), "hex"),
           })
-          .onConflict((oc) =>
-            oc.columns(["tx_hash", "log_index"]).doUpdateSet({
-              status: w.status,
-              block_timestamp: new Date(),
-            }),
-          )
+          .onConflict((oc) => oc.columns(["tx_hash", "log_index", "chain_id"]).doNothing())
           .returningAll()
           .executeTakeFirst();
 
@@ -152,28 +131,34 @@ export class KyselyRecordRepository implements RecordRepository {
         }
       }
 
-      // 4. Persist Trades
+      // 3. Persist Trades
       for (const t of trades) {
         if (t.recordType !== "trade") continue;
         const res = await db
-          .insertInto("trades")
+          .insertInto("raw_trades")
           .values({
-            trade_id: t.trade_id,
             tx_hash: t.tx_hash,
+            log_index: t.log_index,
+            chain_id: t.chain_id!,
             block_number: t.block_number,
+            block_hash: t.block_hash!,
+            block_timestamp: new Date(),
+            transaction_index: t.transaction_index!,
             order_hash_0: t.order_hash_0,
             order_hash_1: t.order_hash_1,
             user_0: t.user_0,
             user_1: t.user_1,
             token_0: t.token_0,
             token_1: t.token_1,
-            match_amount_0: t.match_amount_0,
-            match_amount_1: t.match_amount_1,
+            amount_0: t.amount_0,
+            amount_1: t.amount_1,
+            protocol_take_0: t.protocol_take_0,
+            protocol_take_1: t.protocol_take_1,
+            raw_topics: t.raw_topics!,
+            raw_data: Buffer.from(t.raw_data!.slice(2), "hex"),
             price_0_to_1: t.price_0_to_1,
-            volume_usd: "0",
-            block_timestamp: new Date(),
           })
-          .onConflict((oc) => oc.column("trade_id").doNothing())
+          .onConflict((oc) => oc.columns(["tx_hash", "log_index", "chain_id"]).doNothing())
           .returningAll()
           .executeTakeFirst();
 
@@ -186,13 +171,17 @@ export class KyselyRecordRepository implements RecordRepository {
         }
       }
 
-      // 5. Persist Order Fills
+      // 4. Persist Order Fills
       for (const f of fills) {
         if (f.recordType !== "order_fill") continue;
         const res = await db
-          .insertInto("order_fills")
+          .insertInto("raw_order_fills")
           .values({
             fill_id: f.fill_id,
+            tx_hash: f.tx_hash,
+            log_index: f.log_index,
+            chain_id: f.chain_id!,
+            block_number: f.block_number,
             order_hash: f.order_hash,
             trade_id: f.trade_id,
             amount_filled: f.amount_filled,
@@ -211,27 +200,26 @@ export class KyselyRecordRepository implements RecordRepository {
         }
       }
 
-      // 6. Persist Swaps
+      // 5. Persist Swaps
       for (const s of swaps) {
         if (s.recordType !== "swap") continue;
         const res = await db
-          .insertInto("swaps")
+          .insertInto("raw_swaps")
           .values({
             intent_hash: s.intent_hash,
             tx_hash: s.tx_hash,
+            log_index: s.log_index,
+            chain_id: s.chain_id!,
             block_number: s.block_number,
-            taker_address: s.taker_address,
-            input_token: s.input_token,
-            output_token: s.output_token,
-            input_amount: s.input_amount,
-            output_amount: s.output_amount,
-            volume_usd: "0",
-            routing_path: s.routing_path,
-            fee_amount: s.fee_amount,
-            fee_token: s.fee_token,
+            block_hash: s.block_hash!,
             block_timestamp: new Date(),
+            transaction_index: s.transaction_index!,
+            taker_address: s.taker_address,
+            leg_count: s.leg_count,
+            raw_topics: s.raw_topics!,
+            raw_data: Buffer.from(s.raw_data!.slice(2), "hex"),
           })
-          .onConflict((oc) => oc.columns(["intent_hash", "tx_hash"]).doNothing())
+          .onConflict((oc) => oc.columns(["intent_hash", "tx_hash", "chain_id"]).doNothing())
           .returningAll()
           .executeTakeFirst();
 

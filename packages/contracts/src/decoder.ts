@@ -15,6 +15,8 @@ export interface BaseEvent {
   topics: string[];
   data: string;
   blockHash: string;
+  transactionIndex: number;
+  chainId: number;
 }
 
 export interface DepositedEvent extends BaseEvent {
@@ -180,9 +182,10 @@ export interface EventDecoder {
    * Translates a raw EVM log into a discriminated union type-safe protocol event.
    *
    * @param log The raw log retrieved from the blockchain node.
+   * @param chainId Optional chain identifier.
    * @throws {DecoderError} If the decoder encounters unexpected internal failures.
    */
-  decode(log: BlockchainLog): SeraEvent;
+  decode(log: BlockchainLog, chainId?: number): SeraEvent;
 }
 
 /**
@@ -192,13 +195,13 @@ export class AbiEventDecoder implements EventDecoder {
   /**
    * Decodes a raw blockchain log into a strongly typed event representation.
    */
-  public decode(log: BlockchainLog): SeraEvent {
+  public decode(log: BlockchainLog, chainId?: number): SeraEvent {
     try {
       if (!log) {
         throw new DecoderError("BlockchainLog input parameter cannot be null or undefined");
       }
 
-      const { address, topics, data, blockNumber, transactionHash, logIndex, blockHash } = log;
+      const { address, topics, data, blockNumber, transactionHash, logIndex, blockHash, transactionIndex } = log;
       const base: BaseEvent = {
         contractAddress: address.toLowerCase(),
         blockNumber,
@@ -207,6 +210,8 @@ export class AbiEventDecoder implements EventDecoder {
         topics,
         data,
         blockHash,
+        transactionIndex,
+        chainId: chainId ?? 0,
       };
 
       if (!topics || topics.length === 0) {

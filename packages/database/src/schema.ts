@@ -1,115 +1,131 @@
 import type { ColumnType, Generated, Kysely, Transaction } from "kysely";
 
-export interface TokensTable {
-  token_address: string; // Primary Key
-  symbol: string;
-  decimals: number;
-  is_whitelisted: Generated<boolean>;
-  created_at: Generated<Date>;
-}
-
-export interface MarketsTable {
-  id: string; // Primary Key
-  base_token_address: string;
-  quote_token_address: string;
-  min_trade_amount: string;
-  price_tick_size: string;
-  created_at: Generated<Date>;
-}
-
-export interface UsersTable {
-  wallet_address: string; // Primary Key
-  first_active_at: Date;
-  last_active_at: Date;
-  is_restricted: Generated<boolean>;
-}
-
-export interface DepositsTable {
+export interface RawDepositsTable {
   tx_hash: string; // Composite Primary Key
   log_index: number; // Composite Primary Key
+  chain_id: number; // Composite Primary Key
   block_number: number;
-  user_address: string;
-  token_address: string;
-  amount: string;
-  amount_usd: number | null;
+  block_hash: string;
   block_timestamp: Date;
-}
-
-export interface WithdrawalsTable {
-  tx_hash: string; // Composite Primary Key
-  log_index: number; // Composite Primary Key
-  block_number: number;
+  transaction_index: number;
   user_address: string;
   token_address: string;
   amount: string;
-  amount_usd: number | null;
-  type: "standard" | "instant" | "emergency";
-  status: "pending_timelock" | "executed" | "cancelled";
+  raw_topics: string[];
+  raw_data: Buffer;
+}
+
+export interface RawWithdrawalsTable {
+  tx_hash: string; // Composite Primary Key
+  log_index: number; // Composite Primary Key
+  chain_id: number; // Composite Primary Key
+  block_number: number;
+  block_hash: string;
+  block_timestamp: Date;
+  transaction_index: number;
+  user_address: string;
+  token_address: string;
+  amount: string;
+  withdrawal_type: string;
   request_block: number | null;
-  block_timestamp: Date;
+  raw_topics: string[];
+  raw_data: Buffer;
 }
 
-export interface TradesTable {
-  trade_id: Generated<string>; // Primary Key
-  tx_hash: string;
+export interface RawTradesTable {
+  tx_hash: string; // Composite Primary Key
+  log_index: number; // Composite Primary Key
+  chain_id: number; // Composite Primary Key
   block_number: number;
+  block_hash: string;
+  block_timestamp: Date;
+  transaction_index: number;
   order_hash_0: string;
   order_hash_1: string;
   user_0: string;
   user_1: string;
   token_0: string;
   token_1: string;
-  match_amount_0: string;
-  match_amount_1: string;
+  amount_0: string;
+  amount_1: string;
+  protocol_take_0: string;
+  protocol_take_1: string;
+  raw_topics: string[];
+  raw_data: Buffer;
   price_0_to_1: string;
-  volume_usd: string;
-  gas_used: number | null;
-  gas_price_gwei: string | null;
-  block_timestamp: Date;
 }
 
-export interface SwapsTable {
-  intent_hash: string; // Composite Primary Key
-  tx_hash: string; // Composite Primary Key
+export interface RawOrderFillsTable {
+  fill_id: string; // Primary Key
+  tx_hash: string;
+  log_index: number;
+  chain_id: number;
   block_number: number;
-  taker_address: string;
-  input_token: string;
-  output_token: string;
-  input_amount: string;
-  output_amount: string;
-  volume_usd: string;
-  routing_path: string; // JSON string
-  fee_amount: string;
-  fee_token: string;
-  block_timestamp: Date;
-}
-
-export interface OrdersRawTable {
-  order_hash: string; // Primary Key
-  user_address: string;
-  market_id: string;
-  side: "buy" | "sell";
-  price: string;
-  amount: string;
-  filled_amount: Generated<string>;
-  status: "active" | "filled" | "partially_filled" | "cancelled" | "expired";
-  is_virtual: Generated<boolean>;
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface OrderFillsTable {
-  fill_id: Generated<string>; // Primary Key
   order_hash: string;
   trade_id: string;
   amount_filled: string;
   block_timestamp: Date;
 }
 
-export interface TokenPricesTable {
-  token_address: string; // Composite Primary Key
-  price_usd: string;
-  timestamp: Date; // Composite Primary Key
+export interface RawSwapsTable {
+  intent_hash: string; // Composite Primary Key
+  tx_hash: string; // Composite Primary Key
+  log_index: number;
+  chain_id: number; // Composite Primary Key
+  block_number: number;
+  block_hash: string;
+  block_timestamp: Date;
+  transaction_index: number;
+  taker_address: string;
+  leg_count: number;
+  raw_topics: string[];
+  raw_data: Buffer;
+}
+
+export interface RawSwapLegsTable {
+  tx_hash: string;
+  log_index: number;
+  chain_id: number; // Composite Primary Key
+  block_number: number;
+  block_hash: string;
+  block_timestamp: Date;
+  transaction_index: number;
+  intent_hash: string; // Composite Primary Key
+  leg_index: number; // Composite Primary Key
+  taker_order_hash: string;
+  maker_order_hash: string;
+  raw_topics: string[];
+  raw_data: Buffer;
+}
+
+export interface RawFailedMatchesTable {
+  tx_hash: string; // Composite Primary Key
+  log_index: number; // Composite Primary Key
+  chain_id: number; // Composite Primary Key
+  block_number: number;
+  block_hash: string;
+  block_timestamp: Date;
+  transaction_index: number;
+  order_hash_0: string;
+  order_hash_1: string;
+  reason: string;
+  batch_index: number;
+  raw_topics: string[];
+  raw_data: Buffer;
+}
+
+export interface RawFailedIntentsTable {
+  tx_hash: string; // Composite Primary Key
+  log_index: number; // Composite Primary Key
+  chain_id: number; // Composite Primary Key
+  block_number: number;
+  block_hash: string;
+  block_timestamp: Date;
+  transaction_index: number;
+  intent_index: number;
+  reason: string;
+  raw_topics: string[];
+  raw_data: Buffer;
 }
 
 export interface CheckpointsTable {
@@ -119,13 +135,6 @@ export interface CheckpointsTable {
   updated_at: Date;
 }
 
-/**
- * Persisted block header information.
- *
- * `is_canonical` is the single source of truth for chain canonicality.
- * Protocol tables reference blocks via (chain_id, block_hash) and derive
- * canonicality by joining with this table.
- */
 export interface BlockMetadataTable {
   chain_id: number; // Composite Primary Key
   block_number: number; // Composite Primary Key
@@ -157,24 +166,18 @@ export interface MetadataQueueTable {
 }
 
 export interface DatabaseSchema {
-  tokens: TokensTable;
-  markets: MarketsTable;
-  users: UsersTable;
-  deposits: DepositsTable;
-  withdrawals: WithdrawalsTable;
-  trades: TradesTable;
-  swaps: SwapsTable;
-  orders_raw: OrdersRawTable;
-  order_fills: OrderFillsTable;
-  token_prices: TokenPricesTable;
+  raw_deposits: RawDepositsTable;
+  raw_withdrawals: RawWithdrawalsTable;
+  raw_trades: RawTradesTable;
+  raw_order_fills: RawOrderFillsTable;
+  raw_swaps: RawSwapsTable;
+  raw_swap_legs: RawSwapLegsTable;
+  raw_failed_matches: RawFailedMatchesTable;
+  raw_failed_intents: RawFailedIntentsTable;
   checkpoints: CheckpointsTable;
   block_metadata: BlockMetadataTable;
   token_metadata: TokenMetadataTable;
   metadata_queue: MetadataQueueTable;
 }
 
-/**
- * DatabaseContext represents the common query execution context.
- * It can be either the primary database client or a Kysely transaction.
- */
 export type DatabaseContext = Kysely<DatabaseSchema> | Transaction<DatabaseSchema>;

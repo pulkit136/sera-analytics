@@ -11,6 +11,7 @@ export const IntentMatchedHandler: EventHandler<IntentMatchedEvent> = {
     const takerAddress = event.args.taker.toLowerCase();
     const txHash = event.transactionHash.toLowerCase();
     const blockNumber = Number(event.blockNumber);
+    const logIndex = event.logIndex;
 
     return [
       {
@@ -18,18 +19,9 @@ export const IntentMatchedHandler: EventHandler<IntentMatchedEvent> = {
         intent_hash: event.args.intentHash.toLowerCase(),
         tx_hash: txHash,
         block_number: blockNumber,
+        log_index: logIndex,
         taker_address: takerAddress,
-        input_token: "",
-        output_token: "",
-        input_amount: "0",
-        output_amount: "0",
-        routing_path: "[]",
-        fee_amount: "0",
-        fee_token: "",
-      },
-      {
-        recordType: "user",
-        wallet_address: takerAddress,
+        leg_count: Number(event.args.legCount),
       },
     ];
   },

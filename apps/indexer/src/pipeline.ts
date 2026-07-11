@@ -238,7 +238,7 @@ export class IndexingPipeline {
 
     // 7. Decode and normalize logs.
     for (const log of logs) {
-      const event = this.decoder.decode(log);
+      const event = this.decoder.decode(log, config.chainId);
 
       if (event.type === "UnknownEvent") {
         unknownEventsCount++;

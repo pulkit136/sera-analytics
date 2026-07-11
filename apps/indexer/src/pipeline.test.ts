@@ -124,7 +124,7 @@ describe("IndexingPipeline Unit Tests", () => {
     // Verify ordering interaction
     expect(reader.getLatestBlockNumber).toHaveBeenCalledTimes(1);
     expect(reader.getLogs).toHaveBeenCalledTimes(1);
-    expect(decoder.decode).toHaveBeenCalledWith(mockLogs[0]);
+    expect(decoder.decode).toHaveBeenCalledWith(mockLogs[0], baseConfig.chainId);
     expect(normalizer.normalize).toHaveBeenCalledWith(mockEvent);
     expect(repository.saveRecords).toHaveBeenCalledWith(expect.any(Object), mockRecords);
   });
