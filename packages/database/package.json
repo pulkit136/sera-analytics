@@ -1,0 +1,27 @@
+{
+  "name": "@sera/database",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "lint": "biome check src",
+    "test": "vitest run src"
+  },
+  "dependencies": {
+    "@sera/contracts": "workspace:*",
+    "@sera/metadata": "workspace:*",
+    "@sera/observability": "workspace:*",
+    "@sera/shared": "workspace:*",
+    "kysely": "^0.27.3",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.6",
+    "typescript": "^5.5.3",
+    "vitest": "^1.6.0"
+  }
+}

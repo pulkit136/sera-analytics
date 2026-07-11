@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/observability" },
+    { "path": "./packages/contracts" },
+    { "path": "./packages/database" },
+    { "path": "./packages/metadata" },
+    { "path": "./packages/benchmarks" },
+    { "path": "./apps/indexer" }
+  ]
+}

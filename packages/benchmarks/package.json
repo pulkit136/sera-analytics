@@ -1,0 +1,22 @@
+{
+  "name": "@sera/benchmarks",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/run.js",
+  "scripts": {
+    "build": "tsc",
+    "benchmark": "node dist/run.js"
+  },
+  "dependencies": {
+    "@sera/contracts": "workspace:*",
+    "@sera/database": "workspace:*",
+    "@sera/metadata": "workspace:*",
+    "@sera/observability": "workspace:*",
+    "@sera/shared": "workspace:*",
+    "viem": "^2.16.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.3"
+  }
+}

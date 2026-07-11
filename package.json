@@ -1,0 +1,32 @@
+{
+  "name": "sera-data",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic indexer and analytics platform for the Sera Protocol",
+  "packageManager": "pnpm@9.4.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "npx turbo run build",
+    "dev": "npx turbo run dev --parallel",
+    "lint": "npx turbo run lint",
+    "lint:fix": "biome check --write .",
+    "test": "npx turbo run test",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
+    "@changesets/cli": "^2.27.7",
+    "@types/node": "^20.14.9",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.7",
+    "turbo": "^2.0.4",
+    "typescript": "^5.5.3",
+    "vitest": "^1.6.0"
+  },
+  "lint-staged": {
+    "*.{js,ts}": "biome check --write --no-errors-on-unmatched"
+  }
+}
