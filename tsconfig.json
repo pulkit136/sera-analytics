@@ -12,6 +12,7 @@
     { "path": "./packages/metadata" },
     { "path": "./packages/query" },
     { "path": "./packages/benchmarks" },
-    { "path": "./apps/indexer" }
+    { "path": "./apps/indexer" },
+    { "path": "./apps/api" }
   ]
 }
