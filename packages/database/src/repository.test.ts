@@ -119,9 +119,7 @@ describe("KyselyRecordRepository Unit Tests", () => {
     ];
 
     // Set mock database to return undefined (skipped/doNothing) for deposit
-    mockDb.mockReturns = [
-      undefined,
-    ];
+    mockDb.mockReturns = [undefined];
 
     const result = await repository.saveRecords(context, records);
 

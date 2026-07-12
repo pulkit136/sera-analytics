@@ -37,7 +37,6 @@ export class DefaultMetadataPipeline implements MetadataPipeline {
     this.logger = logger || NOOP_LOGGER;
   }
 
-
   /**
    * Consumes a discovery batch, filters out already-known tokens (both in queue and repo),
    * and enqueues the rest as pending metadata jobs.

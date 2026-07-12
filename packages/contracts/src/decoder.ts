@@ -201,7 +201,16 @@ export class AbiEventDecoder implements EventDecoder {
         throw new DecoderError("BlockchainLog input parameter cannot be null or undefined");
       }
 
-      const { address, topics, data, blockNumber, transactionHash, logIndex, blockHash, transactionIndex } = log;
+      const {
+        address,
+        topics,
+        data,
+        blockNumber,
+        transactionHash,
+        logIndex,
+        blockHash,
+        transactionIndex,
+      } = log;
       const base: BaseEvent = {
         contractAddress: address.toLowerCase(),
         blockNumber,

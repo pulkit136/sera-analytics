@@ -51,7 +51,11 @@ export interface WithdrawalQueries {
    * Fetches a withdrawal by its transaction hash and log index on a specific chain.
    * Only returns the withdrawal if its block is canonical.
    */
-  getWithdrawal(chainId: number, txHash: string, logIndex: number): Promise<WithdrawalRecord | null>;
+  getWithdrawal(
+    chainId: number,
+    txHash: string,
+    logIndex: number,
+  ): Promise<WithdrawalRecord | null>;
 
   /**
    * Lists withdrawals for a specific user on a chain, sorted newest first.
@@ -63,14 +67,18 @@ export interface WithdrawalQueries {
 class KyselyDepositQueries implements DepositQueries {
   constructor(private readonly db: DatabaseContext) {}
 
-  public async getDeposit(chainId: number, txHash: string, logIndex: number): Promise<DepositRecord | null> {
+  public async getDeposit(
+    chainId: number,
+    txHash: string,
+    logIndex: number,
+  ): Promise<DepositRecord | null> {
     const row = await this.db
       .selectFrom("raw_deposits")
       .innerJoin("block_metadata", (join) =>
         join
           .onRef("block_metadata.chain_id", "=", "raw_deposits.chain_id")
           .onRef("block_metadata.block_number", "=", "raw_deposits.block_number")
-          .onRef("block_metadata.block_hash", "=", "raw_deposits.block_hash")
+          .onRef("block_metadata.block_hash", "=", "raw_deposits.block_hash"),
       )
       .selectAll("raw_deposits")
       .where("raw_deposits.chain_id", "=", chainId)
@@ -104,7 +112,7 @@ class KyselyDepositQueries implements DepositQueries {
         join
           .onRef("block_metadata.chain_id", "=", "raw_deposits.chain_id")
           .onRef("block_metadata.block_number", "=", "raw_deposits.block_number")
-          .onRef("block_metadata.block_hash", "=", "raw_deposits.block_hash")
+          .onRef("block_metadata.block_hash", "=", "raw_deposits.block_hash"),
       )
       .selectAll("raw_deposits")
       .where("raw_deposits.chain_id", "=", chainId)
@@ -135,14 +143,18 @@ class KyselyDepositQueries implements DepositQueries {
 class KyselyWithdrawalQueries implements WithdrawalQueries {
   constructor(private readonly db: DatabaseContext) {}
 
-  public async getWithdrawal(chainId: number, txHash: string, logIndex: number): Promise<WithdrawalRecord | null> {
+  public async getWithdrawal(
+    chainId: number,
+    txHash: string,
+    logIndex: number,
+  ): Promise<WithdrawalRecord | null> {
     const row = await this.db
       .selectFrom("raw_withdrawals")
       .innerJoin("block_metadata", (join) =>
         join
           .onRef("block_metadata.chain_id", "=", "raw_withdrawals.chain_id")
           .onRef("block_metadata.block_number", "=", "raw_withdrawals.block_number")
-          .onRef("block_metadata.block_hash", "=", "raw_withdrawals.block_hash")
+          .onRef("block_metadata.block_hash", "=", "raw_withdrawals.block_hash"),
       )
       .selectAll("raw_withdrawals")
       .where("raw_withdrawals.chain_id", "=", chainId)
@@ -171,14 +183,17 @@ class KyselyWithdrawalQueries implements WithdrawalQueries {
     };
   }
 
-  public async listWithdrawalsByUser(chainId: number, userAddress: string): Promise<WithdrawalRecord[]> {
+  public async listWithdrawalsByUser(
+    chainId: number,
+    userAddress: string,
+  ): Promise<WithdrawalRecord[]> {
     const rows = await this.db
       .selectFrom("raw_withdrawals")
       .innerJoin("block_metadata", (join) =>
         join
           .onRef("block_metadata.chain_id", "=", "raw_withdrawals.chain_id")
           .onRef("block_metadata.block_number", "=", "raw_withdrawals.block_number")
-          .onRef("block_metadata.block_hash", "=", "raw_withdrawals.block_hash")
+          .onRef("block_metadata.block_hash", "=", "raw_withdrawals.block_hash"),
       )
       .selectAll("raw_withdrawals")
       .where("raw_withdrawals.chain_id", "=", chainId)

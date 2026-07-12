@@ -1,4 +1,4 @@
-import { buildChain, buildDepositLog, ADDRESSES } from "./helpers.js";
+import { ADDRESSES, buildChain, buildDepositLog } from "./helpers.js";
 
 // chainA represents the initial fork: block 100 -> block 101 (hashA) -> block 102 (hashA)
 export const reorgChainA = buildChain([

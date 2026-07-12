@@ -1,12 +1,12 @@
 import { getDb } from "@sera/database";
-import { getConfig, logger } from "@sera/shared";
 import {
   createBlockQueries,
   createDepositQueries,
-  createWithdrawalQueries,
-  createTradeQueries,
   createMetadataQueries,
+  createTradeQueries,
+  createWithdrawalQueries,
 } from "@sera/query";
+import { getConfig, logger } from "@sera/shared";
 import { buildApp } from "./app.js";
 
 async function start() {
@@ -14,7 +14,7 @@ async function start() {
   const config = getConfig();
 
   const db = getDb();
-  
+
   // Initialize Kysely-backed implementations of the query layer
   const dependencies = {
     block: createBlockQueries(db),

@@ -57,7 +57,10 @@ class KyselyBlockQueries implements BlockQueries {
     };
   }
 
-  public async getBlockByNumber(chainId: number, blockNumber: number): Promise<BlockMetadata | null> {
+  public async getBlockByNumber(
+    chainId: number,
+    blockNumber: number,
+  ): Promise<BlockMetadata | null> {
     const row = await this.db
       .selectFrom("block_metadata")
       .selectAll()

@@ -1,25 +1,21 @@
-import { describe, expect, it, vi } from "vitest";
 import { DefaultDiscoveryEngine, DefaultTokenDiscoveryRegistry } from "@sera/metadata";
-import {
-  DepositDiscoveryRule,
-  WithdrawalDiscoveryRule,
-  SwapDiscoveryRule,
-} from "@sera/metadata";
-import { MockBlockchainReader } from "./mocks/MockBlockchainReader.js";
-import {
-  setupTestDb,
-  createProductionPipeline,
-  createProductionMetadataPipeline,
-  serializeDatabaseState,
-  assertDbEquals,
-  MockKyselyDatabase,
-} from "./helpers.js";
-import { replayFixture } from "./fixtures/replay.js";
-import { reorgChainA, reorgChainB } from "./fixtures/reorg.js";
+import { DepositDiscoveryRule, SwapDiscoveryRule, WithdrawalDiscoveryRule } from "@sera/metadata";
+import { describe, expect, it, vi } from "vitest";
 import { crashFixture } from "./fixtures/crash.js";
-import { mixedFixture } from "./fixtures/mixed.js";
 import { emptyBlocksFixture } from "./fixtures/emptyBlocks.js";
 import { ADDRESSES, CHAIN_ID, INDEXER_NAME } from "./fixtures/helpers.js";
+import { mixedFixture } from "./fixtures/mixed.js";
+import { reorgChainA, reorgChainB } from "./fixtures/reorg.js";
+import { replayFixture } from "./fixtures/replay.js";
+import {
+  MockKyselyDatabase,
+  assertDbEquals,
+  createProductionMetadataPipeline,
+  createProductionPipeline,
+  serializeDatabaseState,
+  setupTestDb,
+} from "./helpers.js";
+import { MockBlockchainReader } from "./mocks/MockBlockchainReader.js";
 
 describe("Deterministic End-to-End Indexing Integration Tests", () => {
   const db = new MockKyselyDatabase();
@@ -115,7 +111,7 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
         contractAddresses: [ADDRESSES.TOKEN_USDC, ADDRESSES.TOKEN_WBTC],
         indexerName: INDEXER_NAME,
         chainId: CHAIN_ID,
-      })
+      }),
     ).rejects.toThrow();
 
     // Verify atomicity: block 101 records should NOT be saved, and checkpoint should NOT be updated.
@@ -240,7 +236,7 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
 
     // Discover tokens from deposits in DB
     const rawDeposits = await db.selectFrom("raw_deposits").selectAll().execute();
-    const deposits = rawDeposits.map(d => ({ ...d, recordType: "deposit" as const }));
+    const deposits = rawDeposits.map((d) => ({ ...d, recordType: "deposit" as const }));
     const discoveryBatch = discoveryEngine.discoverTokens(deposits, CHAIN_ID, 100, 102);
 
     expect(discoveryBatch.tokens).toHaveLength(2); // USDC and WBTC
@@ -323,7 +319,7 @@ describe("Deterministic End-to-End Indexing Integration Tests", () => {
     const discoveryEngine = new DefaultDiscoveryEngine(registry);
 
     const rawDeposits = await db.selectFrom("raw_deposits").selectAll().execute();
-    const deposits = rawDeposits.map(d => ({ ...d, recordType: "deposit" as const }));
+    const deposits = rawDeposits.map((d) => ({ ...d, recordType: "deposit" as const }));
     const discoveryBatch = discoveryEngine.discoverTokens(deposits, CHAIN_ID, 100, 102);
 
     // Mock provider returns unsupported for WBTC, and success for USDC

@@ -20,7 +20,10 @@ export interface MetadataQueries {
 class KyselyMetadataQueries implements MetadataQueries {
   constructor(private readonly db: DatabaseContext) {}
 
-  public async getTokenMetadata(chainId: number, tokenAddress: string): Promise<TokenMetadata | null> {
+  public async getTokenMetadata(
+    chainId: number,
+    tokenAddress: string,
+  ): Promise<TokenMetadata | null> {
     const row = await this.db
       .selectFrom("token_metadata")
       .selectAll()

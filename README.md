@@ -1,87 +1,111 @@
 # sera-data
 
-An open-source, deterministic data indexing and analytics platform for the **Sera Protocol** built with TypeScript, Node.js 22, pnpm workspaces, and Turborepo.
+An open-source, deterministic data indexing and read query platform for the **Sera Protocol** built with TypeScript, Node.js 22, pnpm workspaces, and Kysely.
 
 ---
 
-## Project Structure
+## 1. Why `sera-data` Exists
 
-This monorepo separates ingestion, databases, and configuration interfaces into logical boundary layers:
+Exposing query access directly to raw blockchain RPC nodes is slow, expensive, and fails to handle block reorganizations (reorgs) cleanly. `sera-data` solves this by building a deterministic, relational database cache from raw blockchain events. It handles reorg safety at the block level and exposes a zero-caching, type-safe query layer to build downstream APIs, analytics, SDKs, and explorers.
+
+---
+
+## 2. Architecture
+
+```mermaid
+flowchart TD
+    BC["Blockchain (EVM RPC)"] -->|Event Logs| Indexer["Continuous Indexer (apps/indexer)"]
+    Indexer -->|Decodes & Normalizes| Database["Database (Postgres Cache)"]
+    Database -->|Exposes Read Interfaces| Query["Query Layer (@sera/query)"]
+    Query -->|Serves Request| API["HTTP API (apps/api)"]
+```
+
+For more details, see the [High-Level Architecture Guide](docs/architecture.md).
+
+---
+
+## 3. Key Features
+
+- **Replay Invariant**: Wiping the database and running the indexer always recreates the identical state from genesis.
+- **Reorg Safety**: Canonicality is tracked at the block level (`block_metadata.is_canonical`). Reads join fact tables with block canonicality to filter out orphaned logs.
+- **Dependency Isolation**: Strict layers prevent routing/transport modules from coupling to database Kysely context interfaces.
+
+---
+
+## 4. Quick Start
+
+Get the backing PostgreSQL services and both applications running using Docker Compose:
+
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Run database, indexer, and API stack
+docker compose up --build -d
+```
+
+---
+
+## 5. Running Locally (Development)
+
+To run the pipeline and server locally outside of Docker:
+
+```bash
+# 1. Boot Postgres database container
+docker compose up postgres -d
+
+# 2. Install dependencies & build topological workspaces
+pnpm install
+pnpm run build
+
+# 3. Start indexer pipeline listener daemon
+pnpm --filter @sera/indexer start
+
+# 4. Start HTTP API server
+pnpm --filter @sera/api start
+```
+
+---
+
+## 6. Project Structure
 
 ```
 sera-data/
 ├── apps/
-│   └── indexer/             # Blockchain event listener and normalizer daemon
-└── packages/
-    ├── contracts/           # Smart contract ABIs and network addresses
-    ├── database/            # Kysely client, migrations, and repositories
-    └── shared/              # Centralized environment configuration and logger
+│   ├── api/                 # Reference HTTP Fastify API app
+│   └── indexer/             # Event listener and normalizer loop daemon
+├── packages/
+│   ├── contracts/           # Event decoders, normalizers, and ABIs
+│   ├── database/            # Kysely client, migrations, and repositories
+│   └── query/               # Stateless read query layer interfaces
+└── docs/                    # Architectural decision records and guides
 ```
 
 ---
 
-## Engineering Guidelines
+## 7. Documentation Directory
 
-Please read the [ARCHITECTURE.md](ARCHITECTURE.md) document to understand the vision, core guidelines, replayability strategies, and operational failover mechanics before submitting pull requests.
+- [High-Level Architecture](docs/architecture.md)
+- [Deployment & Runtime Operations](docs/deployment.md)
+- [Query Layer Specification](docs/query-layer.md)
+- [HTTP API Reference](docs/http-api.md)
+- [Architectural Decision Records (ADRs)](docs/adr/)
+- [Release Verification Checklist](docs/release-checklist.md)
 
 ---
 
-## Developer Quickstart
+## 8. Roadmap
 
-### Prerequisites
-*   Node.js >= 22.0.0
-*   pnpm >= 9.0.0
-*   Docker (for local Postgres services)
+- **Milestone 1**: Deterministic Query Layer (Completed)
+- **Milestone 2**: Reference HTTP API (Completed)
+- **Milestone 3**: Production Runtime & Operations (Completed)
+- **Milestone 4**: Open Source Release Engineering (Current)
+- **Milestone 5**: Analytics & TVL Accumulator (Future)
 
-### 1. Installation & Environment
-Setup workspace configuration files and install dependencies:
-```bash
-# Copy example environment configuration
-cp .env.example .env
+---
 
-# Install dependencies and link packages
-pnpm install
-```
+## 9. Contributing & License
 
-### 2. Run Database Stack
-You can start a local PostgreSQL container for development:
-```bash
-docker compose up postgres -d
-```
-Or start the complete production-grade application stack (database, indexer, and API) in containerized mode:
-```bash
-docker compose up --build -d
-```
+Contributions are welcome! Please read the [Contributing Guidelines](docs/contributing.md) to get started.
 
-### 3. Build & Compile Packages
-Compile the typescript code across all workspaces in topological order:
-```bash
-pnpm run build
-```
-
-### 4. Running Services (Locally)
-Start the indexer pipeline listener and HTTP API services:
-```bash
-# Start continuous indexer daemon
-pnpm --filter @sera/indexer start
-
-# Start reference HTTP API server
-pnpm --filter @sera/api start
-```
-
-### 5. Running Lint & Quality Checks
-We use **Biome** for fast, integrated linting and formatting:
-```bash
-# Check rules
-pnpm run lint
-
-# Auto-fix formatting and imports
-pnpm run lint:fix
-```
-
-### 6. Running Tests
-Run Vitest suites across the workspaces:
-```bash
-pnpm run test
-```
-
+Distributed under the Apache 2.0 License.

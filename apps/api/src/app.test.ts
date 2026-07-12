@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildApp, type ApiDependencies } from "./app.js";
+import { type ApiDependencies, buildApp } from "./app.js";
 
 describe("HTTP API Route Unit Tests", () => {
   const dummyBlock = {
@@ -130,7 +130,7 @@ describe("HTTP API Route Unit Tests", () => {
     expect(badResponse.statusCode).toBe(400);
 
     // Not found check
-    const hash = "0x" + "a".repeat(64);
+    const hash = `0x${"a".repeat(64)}`;
     const goodResponse = await app.inject({
       method: "GET",
       url: `/blocks/hash/${hash}`,
@@ -144,7 +144,7 @@ describe("HTTP API Route Unit Tests", () => {
     vi.mocked(deps.deposit.getDeposit).mockResolvedValue(dummyDeposit as any);
     const app = buildApp(deps);
 
-    const txHash = "0x" + "b".repeat(64);
+    const txHash = `0x${"b".repeat(64)}`;
 
     // Validation error check
     const badResponse = await app.inject({
@@ -174,7 +174,7 @@ describe("HTTP API Route Unit Tests", () => {
     });
     expect(badResponse.statusCode).toBe(400);
 
-    const address = "0x" + "c".repeat(40);
+    const address = `0x${"c".repeat(40)}`;
     const goodResponse = await app.inject({
       method: "GET",
       url: `/accounts/${address}/deposits`,
@@ -189,7 +189,7 @@ describe("HTTP API Route Unit Tests", () => {
     vi.mocked(deps.trade.listTradesByUser).mockResolvedValue([]);
     const app = buildApp(deps);
 
-    const address = "0x" + "d".repeat(40);
+    const address = `0x${"d".repeat(40)}`;
     const response = await app.inject({
       method: "GET",
       url: `/accounts/${address}/trades`,
@@ -211,7 +211,7 @@ describe("HTTP API Route Unit Tests", () => {
     });
     const app = buildApp(deps);
 
-    const address = "0x" + "e".repeat(40);
+    const address = `0x${"e".repeat(40)}`;
     const response = await app.inject({
       method: "GET",
       url: `/tokens/${address}`,

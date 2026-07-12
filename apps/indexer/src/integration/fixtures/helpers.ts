@@ -5,10 +5,10 @@
  * can decode. Every value is deterministic; no Math.random(), no Date.now().
  */
 
-import { encodeAbiParameters, encodeEventTopics, parseAbiParameters } from "viem";
 import { SERA_ABI, SERA_SOR_ABI, VAULT_ABI } from "@sera/contracts";
 import { CONTRACT_ADDRESSES } from "@sera/contracts";
 import type { BlockchainLog } from "@sera/contracts";
+import { encodeAbiParameters, encodeEventTopics, parseAbiParameters } from "viem";
 import type { MockChain } from "../mocks/MockBlockchainReader.js";
 
 // ---------------------------------------------------------------------------
@@ -19,7 +19,7 @@ export const ADDRESSES = {
   TOKEN_USDC: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" as const,
   TOKEN_WBTC: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599" as const,
   USER_ALICE: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" as const,
-  USER_BOB:   "0x70997970c51812dc3a010c7d01b50e0d17dc79c8" as const,
+  USER_BOB: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8" as const,
 };
 
 export const CHAIN_ID = 1;

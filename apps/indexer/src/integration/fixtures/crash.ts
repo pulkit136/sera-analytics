@@ -1,4 +1,4 @@
-import { buildChain, buildDepositLog, ADDRESSES } from "./helpers.js";
+import { ADDRESSES, buildChain, buildDepositLog } from "./helpers.js";
 
 export const crashFixture = {
   chain: buildChain([

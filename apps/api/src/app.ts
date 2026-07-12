@@ -1,11 +1,11 @@
-import Fastify from "fastify";
 import type {
   BlockQueries,
   DepositQueries,
-  WithdrawalQueries,
-  TradeQueries,
   MetadataQueries,
+  TradeQueries,
+  WithdrawalQueries,
 } from "@sera/query";
+import Fastify from "fastify";
 import {
   isValidAddress,
   isValidHash,

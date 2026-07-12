@@ -17,7 +17,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       ["tx_hash", "log_index", "chain_id"],
       "raw_trades",
       ["tx_hash", "log_index", "chain_id"],
-      (cb) => cb.onDelete("cascade")
+      (cb) => cb.onDelete("cascade"),
     )
     .execute();
 

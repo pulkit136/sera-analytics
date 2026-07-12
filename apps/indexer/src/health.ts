@@ -1,5 +1,5 @@
-import type { HealthCheck, HealthStatus } from "@sera/observability";
 import type { CheckpointStore, DatabaseContext } from "@sera/database";
+import type { HealthCheck, HealthStatus } from "@sera/observability";
 import type { PublicClient } from "viem";
 
 /**

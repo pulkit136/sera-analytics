@@ -82,9 +82,7 @@ export class MockBlockchainReader implements BlockchainReader {
       this.failOnBlock <= to
     ) {
       this.failOnBlockCalled = true;
-      throw new Error(
-        `MockBlockchainReader: simulated RPC failure on block ${this.failOnBlock}`,
-      );
+      throw new Error(`MockBlockchainReader: simulated RPC failure on block ${this.failOnBlock}`);
     }
 
     const logs: BlockchainLog[] = [];
@@ -103,9 +101,7 @@ export class MockBlockchainReader implements BlockchainReader {
   async getBlockByNumber(blockNumber: number): Promise<{ hash: string; parentHash: string }> {
     const block = this.chain.blocks.find((b) => b.blockNumber === blockNumber);
     if (!block) {
-      throw new Error(
-        `MockBlockchainReader: block ${blockNumber} not found in fixture chain`,
-      );
+      throw new Error(`MockBlockchainReader: block ${blockNumber} not found in fixture chain`);
     }
     return { hash: block.blockHash, parentHash: block.parentHash };
   }

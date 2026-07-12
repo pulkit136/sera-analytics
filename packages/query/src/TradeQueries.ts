@@ -41,14 +41,18 @@ export interface TradeQueries {
 class KyselyTradeQueries implements TradeQueries {
   constructor(private readonly db: DatabaseContext) {}
 
-  public async getTrade(chainId: number, txHash: string, logIndex: number): Promise<TradeRecord | null> {
+  public async getTrade(
+    chainId: number,
+    txHash: string,
+    logIndex: number,
+  ): Promise<TradeRecord | null> {
     const row = await this.db
       .selectFrom("raw_trades")
       .innerJoin("block_metadata", (join) =>
         join
           .onRef("block_metadata.chain_id", "=", "raw_trades.chain_id")
           .onRef("block_metadata.block_number", "=", "raw_trades.block_number")
-          .onRef("block_metadata.block_hash", "=", "raw_trades.block_hash")
+          .onRef("block_metadata.block_hash", "=", "raw_trades.block_hash"),
       )
       .selectAll("raw_trades")
       .where("raw_trades.chain_id", "=", chainId)
@@ -91,7 +95,7 @@ class KyselyTradeQueries implements TradeQueries {
         join
           .onRef("block_metadata.chain_id", "=", "raw_trades.chain_id")
           .onRef("block_metadata.block_number", "=", "raw_trades.block_number")
-          .onRef("block_metadata.block_hash", "=", "raw_trades.block_hash")
+          .onRef("block_metadata.block_hash", "=", "raw_trades.block_hash"),
       )
       .selectAll("raw_trades")
       .where("raw_trades.chain_id", "=", chainId)
@@ -99,7 +103,7 @@ class KyselyTradeQueries implements TradeQueries {
         eb.or([
           eb("raw_trades.user_0", "=", userAddress),
           eb("raw_trades.user_1", "=", userAddress),
-        ])
+        ]),
       )
       .where("block_metadata.is_canonical", "=", true)
       .orderBy("raw_trades.block_number", "desc")

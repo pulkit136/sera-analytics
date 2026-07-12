@@ -39,6 +39,7 @@ describe("TradeQueries Unit Tests", () => {
       selectAll: selectAllSpy,
       where: whereSpy,
       executeTakeFirst: executeTakeFirstSpy,
+      // biome-ignore lint/suspicious/noExplicitAny: mock database client for test isolation
     } as any;
 
     const queries = createTradeQueries(mockDb);
@@ -69,6 +70,7 @@ describe("TradeQueries Unit Tests", () => {
       where: whereSpy,
       orderBy: orderBySpy,
       execute: executeSpy,
+      // biome-ignore lint/suspicious/noExplicitAny: mock database client for test isolation
     } as any;
 
     const queries = createTradeQueries(mockDb);

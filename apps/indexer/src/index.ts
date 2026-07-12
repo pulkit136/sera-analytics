@@ -1,22 +1,22 @@
 import {
-  CONTRACT_ADDRESSES,
-  ViemBlockchainReader,
   AbiEventDecoder,
+  CONTRACT_ADDRESSES,
   DefaultEventNormalizer,
+  ViemBlockchainReader,
 } from "@sera/contracts";
 import {
-  getDb,
-  KyselyRecordRepository,
-  PostgreSqlCheckpointStore,
-  PostgreSqlBlockMetadataStore,
   type DatabaseSchema,
+  KyselyRecordRepository,
+  PostgreSqlBlockMetadataStore,
+  PostgreSqlCheckpointStore,
+  getDb,
 } from "@sera/database";
-import { getConfig, logger, type Config } from "@sera/shared";
+import { type Config, getConfig, logger } from "@sera/shared";
 import type { Kysely } from "kysely";
-import { http, createPublicClient, type PublicClient } from "viem";
+import { http, type PublicClient, createPublicClient } from "viem";
 import { mainnet } from "viem/chains";
-import { IndexingPipeline } from "./pipeline.js";
 import { ContinuousIndexer } from "./daemon.js";
+import { IndexingPipeline } from "./pipeline.js";
 
 export * from "./pipeline.js";
 export * from "./orchestrator.js";
@@ -52,6 +52,7 @@ export async function bootstrapIndexLoop(): Promise<{
     normalizer,
     repository,
     checkpointStore,
+    // biome-ignore lint/suspicious/noExplicitAny: db is cast dynamically for database schema separation
     db as any,
     undefined,
     blockMetadataStore,
@@ -78,6 +79,7 @@ async function start() {
     maxBackoffMs: 30000,
     jitterFactor: 0.15,
     shutdownTimeoutMs: 10000,
+    // biome-ignore lint/suspicious/noExplicitAny: shared logger does not match trace signature but handles other levels
     logger: logger as any,
   });
 

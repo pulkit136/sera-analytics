@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { EPOCH_CLOCK, InMemoryLogger, WALL_CLOCK } from "./InMemoryLogger.js";
 import { LOG_LEVEL_ORDER } from "./LogLevel.js";
-import { NoopLogger, NOOP_LOGGER } from "./NoopLogger.js";
-import { InMemoryLogger, EPOCH_CLOCK, WALL_CLOCK } from "./InMemoryLogger.js";
 import type { TestLogger } from "./Logger.js";
+import { NOOP_LOGGER, NoopLogger } from "./NoopLogger.js";
 
 // ---------------------------------------------------------------------------
 // LogLevel ordering

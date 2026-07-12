@@ -4,9 +4,7 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "references": [
-    { "path": "../../packages/observability" }
-  ],
+  "references": [{ "path": "../../packages/observability" }],
   "include": ["src/**/*"],
   "exclude": ["src/**/*.test.ts"]
 }
