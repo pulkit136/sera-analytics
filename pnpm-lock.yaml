@@ -167,6 +167,25 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@26.1.1)
 
+  packages/query:
+    dependencies:
+      '@sera/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@sera/database':
+        specifier: workspace:*
+        version: link:../database
+      kysely:
+        specifier: ^0.27.3
+        version: 0.27.6
+    devDependencies:
+      typescript:
+        specifier: ^5.5.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@26.1.1)
+
   packages/shared:
     dependencies:
       dotenv:

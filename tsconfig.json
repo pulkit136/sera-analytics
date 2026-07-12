@@ -10,6 +10,7 @@
     { "path": "./packages/contracts" },
     { "path": "./packages/database" },
     { "path": "./packages/metadata" },
+    { "path": "./packages/query" },
     { "path": "./packages/benchmarks" },
     { "path": "./apps/indexer" }
   ]
