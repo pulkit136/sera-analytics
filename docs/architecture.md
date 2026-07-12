@@ -9,7 +9,7 @@ This document describes the high-level architecture of `sera-data`. The system i
 ```mermaid
 flowchart TD
     BC["Blockchain (EVM RPC)"] -->|Event Logs| Indexer["Continuous Indexer (apps/indexer)"]
-    Indexer -->|Decodes & Normalizes| Database["Database (Postgres Cache)"]
+    Indexer -->|Decodes & Normalizes| Database["Deterministic PostgreSQL Cache"]
     Database -->|Exposes Read Interfaces| Query["Query Layer (@sera/query)"]
     Query -->|Serves Request| API["HTTP API (apps/api)"]
     API -->|JSON Response| Client["Downstream Consumer"]
@@ -24,8 +24,8 @@ flowchart TD
 - **Layer 2 (State & Metadata)**: Stores discovered and computed context information (e.g. `block_metadata`, `token_metadata`, `checkpoints`).
 
 ### Replayability & Reorg Safety
-- **Replay Invariant**: Since all fact tables are populated solely from decoded blockchain logs, the entire database state can be recreated deterministically from genesis by wiping the database and running the indexer.
-- **Reorg Handling**: If the indexer detects a block reorganization (where a block hash changes for a height that was already indexed), it updates the canonicality status in the database and restarts sync from the common ancestor block.
+- **Replay Invariant**: Since all fact tables are populated solely from decoded blockchain logs, the entire deterministic PostgreSQL cache state can be recreated deterministically from genesis by wiping the cache and running the indexer.
+- **Reorg Handling**: If the indexer detects a block reorganization (where a block hash changes for a height that was already indexed), it updates the canonicality status in the deterministic PostgreSQL cache and restarts sync from the common ancestor block.
 
 ### Canonicality
 - To keep the event fact tables append-only and immutable, we **never** modify fact records during a reorg.
