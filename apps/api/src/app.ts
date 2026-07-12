@@ -36,10 +36,20 @@ export function buildApp(dependencies: ApiDependencies) {
 
   // GET /health
   app.get("/health", async (_request, reply) => {
-    return reply.status(200).send({
-      status: "ok",
-      service: "sera-api",
-    });
+    try {
+      await dependencies.block.ping();
+      return reply.status(200).send({
+        status: "ok",
+        service: "sera-api",
+      });
+    } catch (error) {
+      return reply.status(503).send({
+        error: {
+          code: "SERVICE_UNAVAILABLE",
+          message: "Database connection check failed",
+        },
+      });
+    }
   });
 
   // GET /blocks/latest

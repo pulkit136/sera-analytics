@@ -33,25 +33,43 @@ Please read the [ARCHITECTURE.md](ARCHITECTURE.md) document to understand the vi
 *   pnpm >= 9.0.0
 *   Docker (for local Postgres services)
 
-### 1. Installation
-Install workspace dependencies and link typescript modules:
+### 1. Installation & Environment
+Setup workspace configuration files and install dependencies:
 ```bash
+# Copy example environment configuration
+cp .env.example .env
+
+# Install dependencies and link packages
 pnpm install
 ```
 
-### 2. Run Database Locally
-Spin up a local PostgreSQL container:
+### 2. Run Database Stack
+You can start a local PostgreSQL container for development:
 ```bash
-docker compose up -d
+docker compose up postgres -d
+```
+Or start the complete production-grade application stack (database, indexer, and API) in containerized mode:
+```bash
+docker compose up --build -d
 ```
 
 ### 3. Build & Compile Packages
-Compile the typescript code across all packages in topological order:
+Compile the typescript code across all workspaces in topological order:
 ```bash
 pnpm run build
 ```
 
-### 4. Running Lint & Quality Checks
+### 4. Running Services (Locally)
+Start the indexer pipeline listener and HTTP API services:
+```bash
+# Start continuous indexer daemon
+pnpm --filter @sera/indexer start
+
+# Start reference HTTP API server
+pnpm --filter @sera/api start
+```
+
+### 5. Running Lint & Quality Checks
 We use **Biome** for fast, integrated linting and formatting:
 ```bash
 # Check rules
@@ -61,8 +79,9 @@ pnpm run lint
 pnpm run lint:fix
 ```
 
-### 5. Running Tests
+### 6. Running Tests
 Run Vitest suites across the workspaces:
 ```bash
 pnpm run test
 ```
+

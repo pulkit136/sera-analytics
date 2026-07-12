@@ -12,4 +12,14 @@ describe("Shared Package Configuration", () => {
     expect(logger).toBeDefined();
     expect(logger.info).toBeTypeOf("function");
   });
+
+  it("should throw ConfigurationError if PORT is invalid", () => {
+    const originalPort = process.env.PORT;
+    try {
+      process.env.PORT = "999999"; // Out of range port
+      expect(() => getConfig()).toThrow();
+    } finally {
+      process.env.PORT = originalPort;
+    }
+  });
 });

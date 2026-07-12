@@ -14,6 +14,7 @@ const envSchema = z.object({
   REDIS_URL: z.string().url().default("redis://localhost:6379"),
   START_BLOCK: z.coerce.number().int().nonnegative().default(20000000),
   RECONFIRMATION_DEPTH: z.coerce.number().int().nonnegative().default(6),
+  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
 });
 
 export type Config = z.infer<typeof envSchema>;
@@ -21,7 +22,7 @@ export type Config = z.infer<typeof envSchema>;
 let cachedConfig: Config | null = null;
 
 export function getConfig(): Config {
-  if (cachedConfig) {
+  if (cachedConfig && process.env.NODE_ENV !== "test") {
     return cachedConfig;
   }
 

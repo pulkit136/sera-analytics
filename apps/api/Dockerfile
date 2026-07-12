@@ -17,4 +17,4 @@ USER nodeapp
 COPY --from=builder /app /app
 
 ENV NODE_ENV=production
-CMD ["node", "apps/indexer/dist/index.js"]
+CMD ["node", "apps/api/dist/index.js"]

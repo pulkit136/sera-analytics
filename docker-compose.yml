@@ -1,15 +1,14 @@
 version: "3.8"
 
 services:
-  database:
-    image: postgres:16-alpine
-    container_name: sera-data-postgres
-    ports:
-      - "5432:5432"
+  postgres:
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: postgrespassword
       POSTGRES_DB: sera_data
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -17,7 +16,44 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  indexer:
+    build:
+      context: .
+      dockerfile: apps/indexer/Dockerfile
+    init: true
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/sera_data
+      RPC_URL: ${RPC_URL:-http://localhost:8545}
+      START_BLOCK: ${START_BLOCK:-20000000}
+      RECONFIRMATION_DEPTH: ${RECONFIRMATION_DEPTH:-6}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    init: true
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/sera_data
+      PORT: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    restart: always
 
 volumes:
   postgres_data:
-    driver: local

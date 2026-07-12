@@ -30,6 +30,7 @@ describe("HTTP API Route Unit Tests", () => {
       getBlockByHash: vi.fn(),
       getBlockByNumber: vi.fn(),
       getLatestCanonicalBlock: vi.fn(),
+      ping: vi.fn(),
     },
     deposit: {
       getDeposit: vi.fn(),
@@ -62,6 +63,20 @@ describe("HTTP API Route Unit Tests", () => {
       status: "ok",
       service: "sera-api",
     });
+  });
+
+  it("GET /health should return 503 if database ping fails", async () => {
+    const deps = createMockDependencies();
+    vi.mocked(deps.block.ping).mockRejectedValue(new Error("DB Down"));
+    const app = buildApp(deps);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/health",
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json().error.code).toBe("SERVICE_UNAVAILABLE");
   });
 
   it("GET /blocks/latest should return canonical block", async () => {

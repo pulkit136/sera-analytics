@@ -1,4 +1,5 @@
 import type { DatabaseContext } from "@sera/database";
+import { sql } from "kysely";
 
 export interface BlockMetadata {
   chainId: number;
@@ -23,10 +24,19 @@ export interface BlockQueries {
    * Fetches the latest canonical block on a specific chain.
    */
   getLatestCanonicalBlock(chainId: number): Promise<BlockMetadata | null>;
+
+  /**
+   * Executes a lightweight database connectivity check.
+   */
+  ping(): Promise<void>;
 }
 
 class KyselyBlockQueries implements BlockQueries {
   constructor(private readonly db: DatabaseContext) {}
+
+  public async ping(): Promise<void> {
+    await sql`SELECT 1`.execute(this.db);
+  }
 
   public async getBlockByHash(chainId: number, blockHash: string): Promise<BlockMetadata | null> {
     const row = await this.db
